@@ -28,7 +28,7 @@ func New(title, content string) (*Note, error) {
 	}, nil
 }
 
-func (n Note) OutputData() {
+func (n Note) Display() {
 	fmt.Printf("Title: %s\n\n", n.Title)
 	fmt.Println("Content: ")
 	fmt.Println(n.Content)
