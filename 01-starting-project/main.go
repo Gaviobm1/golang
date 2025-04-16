@@ -10,14 +10,30 @@ import (
 func main() {
 	taxRates := []float64{0, 0.07, 0.1, 0.15}
 
-	for _, taxRate := range taxRates {
-		fm := filemanager.New("prices.txt", fmt.Sprintf("results_%.0f.json", taxRate*100))
+	doneChans := make([]chan bool, len(taxRates))
+	errorChans := make([]chan error, len(taxRates))
 
+	for index, taxRate := range taxRates {
+		doneChans[index] = make(chan bool)
+		errorChans[index] = make(chan error)
+
+		fm := filemanager.New("prices.txt", fmt.Sprintf("results_%.0f.json", taxRate*100))
 		priceJob := prices.NewTaxIncludedPriceJob(fm, taxRate)
-		err := priceJob.Process()
-		if err != nil {
-			fmt.Println(err.Error())
-			return
+		go priceJob.Process(doneChans[index], errorChans[index])
+		// if err != nil {
+		// 	fmt.Println(err.Error())
+		// 	return
+		// }
+	}
+
+	for index := range taxRates {
+		select {
+		case err := <-errorChans[index]:
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+		case <-doneChans[index]:
+			fmt.Println("Done!")
 		}
 	}
 

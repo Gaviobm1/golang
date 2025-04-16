@@ -41,16 +41,17 @@ func NewTaxIncludedPriceJob(iom iomanager.IOManager, taxRate float64) *TaxInclud
 	}
 }
 
-func (t *TaxIncludedPriceJob) Process() error {
+func (t *TaxIncludedPriceJob) Process(done chan bool, errorChan chan error) {
 	err := t.LoadData()
 
 	if err != nil {
-		return err
+		errorChan <- err
+		return
 	}
 
 	t.TaxIncludedPrices = CalculateTaxedPrice(t.Prices, t.TaxRate)
 	t.IOManager.WriteJSON(t)
-	return nil
+	done <- true
 }
 
 func CalculateTaxedPrice(prices []float64, taxRate float64) PriceTaxedPriceMap {
